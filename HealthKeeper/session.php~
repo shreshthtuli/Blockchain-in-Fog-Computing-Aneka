@@ -78,9 +78,16 @@ if(isset($_POST['analyze'])){
   	fclose($file);
   	$file = fopen("data.txt", "w+");
 	fwrite($file, $content.PHP_EOL);
-	fclose($file);
 	
-	usleep(2000000);
+	$i = 0;
+	while(!preg_match("/Analyze = Done/", $k)){
+		fclose($file);
+		$file = fopen("data.txt", "r");
+		$k = fgets($file);
+		usleep(100000);
+	}
+	fclose($file);
+
 	$file1 = fopen("result.txt", "r");
 	$result = fgets($file1);
 	$array = explode(",", $result);
