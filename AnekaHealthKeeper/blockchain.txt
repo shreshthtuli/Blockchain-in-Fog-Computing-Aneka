@@ -1,0 +1,13 @@
+    public class Block
+    {
+        public List<int> data = new List<int>();
+        public string hash;
+        public string prevHash;
+        public int index;
+        
+        public string CalculateHash()
+        {
+            string calculatedhash = ComputeSha256Hash(prevHash + DateTime.Now.ToString("yyyyMMddHHmmssfff") + index + data.Join(";", data.Select(x => x.ToString()).ToArray()); a);
+            return calculatedhash;
+        }
+    }
