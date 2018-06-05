@@ -116,8 +116,8 @@ namespace AnekaHealthKeeper
     public class HelloWorld
     {
         public string result = "None";
-        public string savedhash = "";
-        public bool checkhash;
+        public string savedhash = "initialhash";
+        public bool checkhash = true;
         public bool success;
         public List<int> input = new List<int>();
         public int count = 0;
@@ -129,9 +129,17 @@ namespace AnekaHealthKeeper
         {
             result = "HelloWorld";
             success = VerifyData(string.Join(";", input.Select(x => x.ToString()).ToArray()), signature, publicKey);
-            if(!(savedhash == oldhash || savedhash == ""))
+            if(this.savedhash != oldhash && this.savedhash != "initialhash")
             {
+                Console.WriteLine("Saved Hash : " + this.savedhash);
+                Console.WriteLine("Old Hash : " + oldhash);
+                Console.WriteLine("New Hash : " + newhash);
                 this.checkhash = false;
+                Console.WriteLine("Checkhash : " + this.checkhash);
+            }
+            else
+            {
+                this.checkhash = true;
             }
             if (!success)
             {
@@ -307,6 +315,7 @@ namespace AnekaHealthKeeper
                     {
                         throw new Exception("Data tampered in Master!");
                     }
+                    Console.WriteLine("Checked for data temper. No data has been modified.");
                     
                     // Validate blockchain
                     myBlockChain.ValidateChain();
