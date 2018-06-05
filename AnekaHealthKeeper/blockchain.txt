@@ -4,10 +4,70 @@
         public string hash;
         public string prevHash;
         public int index;
-        
+
+        public Block(int index, List<int> data, string previousHash = "")
+        {
+            this.index = index;
+            this.prevHash = previousHash;
+            this.data = data;
+            this.hash = this.CalculateHash();
+        }
         public string CalculateHash()
         {
-            string calculatedhash = ComputeSha256Hash(prevHash + DateTime.Now.ToString("yyyyMMddHHmmssfff") + index + data.Join(";", data.Select(x => x.ToString()).ToArray()); a);
+            string calculatedhash = SHA256_hash(this.prevHash + DateTime.Now.ToString("yyyyMMddHHmmssfff") + this.index + string.Join(";", data.Select(x => x.ToString()).ToArray()));
             return calculatedhash;
+        }
+        // Create a hash string from stirng
+        static string SHA256_hash(string value)
+        {
+            var sb = new StringBuilder();
+            using (SHA256 hash = SHA256Managed.Create())
+            {
+                var enc = Encoding.UTF8;
+                var result = hash.ComputeHash(enc.GetBytes(value));
+                foreach (var b in result)
+                    sb.Append(b.ToString("x2"));
+            }
+            return sb.ToString();
+        }
+    }
+    public class Blockchain
+    {
+        List<Block> chain;
+        public Blockchain()
+        {
+            this.chain = new List<Block>();
+            this.chain.Add(CreateGenesisBlock());
+        }
+        Block CreateGenesisBlock()
+        {
+            return new Block(0, new List<int>(), "");
+        }
+        public Block GetLatestBlock()
+        {
+            return this.chain.Last();
+        }
+        public void AddBlock(Block newBlock)
+        {
+            newBlock.prevHash = this.GetLatestBlock().hash;
+            this.chain.Add(newBlock);
+        }
+        public void ValidateChain()
+        {
+            for (var i = 1; i < this.chain.Count; i++)
+            {
+                var currentBlock = this.chain[i];
+                var previousBlock = this.chain[i - 1];
+                // Check if the current block hash is consistent with the hash calculated
+                if (currentBlock.hash != currentBlock.CalculateHash())
+                {
+                    throw new Exception("Chain is not valid! Current hash is incorrect!");
+                }
+                // Check if the Previous hash match the hash of previous block
+                if (currentBlock.prevHash != previousBlock.hash)
+                {
+                    throw new Exception("Chain is not valid! PreviousHash isn't pointing to the previous block's hash!");
+                }
+            }
         }
     }

@@ -10,9 +10,106 @@ using Aneka.Entity;
 using System.Threading;
 namespace AnekaHealthKeeper
 {
+
+    public class Block
+    {
+        public List<int> data = new List<int>();
+        public string hash;
+        public string prevHash;
+        public int index;
+        public int salt;
+        public string timestamp;
+
+        public Block(int index, List<int> data, string previousHash = "")
+        {
+            this.index = index;
+            this.salt = 0;
+            this.prevHash = previousHash;
+            this.data = data;
+            this.timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+            this.hash = this.CalculateHash();
+        }
+        public string CalculateHash()
+        {
+            string calculatedhash = SHA256_hash(this.salt + this.prevHash + this.timestamp + this.index + string.Join(";", data.Select(x => x.ToString()).ToArray()));
+            return calculatedhash;
+        }
+        public void Mine(int difficulty)
+        {
+            while (this.hash.Substring(0, difficulty) != new String('0', difficulty))
+            {
+                this.salt++;
+                this.hash = this.CalculateHash();
+            }
+        }
+        // Create a hash string from stirng
+        static string SHA256_hash(string value)
+        {
+            var sb = new StringBuilder();
+            using (SHA256 hash = SHA256Managed.Create())
+            {
+                var enc = Encoding.UTF8;
+                var result = hash.ComputeHash(enc.GetBytes(value));
+                foreach (var b in result)
+                    sb.Append(b.ToString("x2"));
+            }
+            return sb.ToString();
+        }
+    }
+    public class Blockchain
+    {
+        List<Block> chain;
+        public int i = 1;
+        private int difficulty = 2;
+        public Blockchain()
+        {
+            this.chain = new List<Block>();
+            this.chain.Add(CreateGenesisBlock());
+        }
+        Block CreateGenesisBlock()
+        {
+            return new Block(0, new List<int>(), "");
+        }
+        public Block GetLatestBlock()
+        {
+            return this.chain.Last();
+        }
+        public void AddBlock(List<int> data)
+        {
+            Console.WriteLine("Adding Block at index : " + i);
+            Block newBlock = new Block(i, data, this.GetLatestBlock().hash);
+            newBlock.Mine(difficulty);
+            this.chain.Add(newBlock);
+            i += 1;
+        }
+        public void ValidateChain()
+        {
+            for (var i = 1; i < this.chain.Count; i++)
+            {
+                var currentBlock = this.chain[i];
+                var previousBlock = this.chain[i - 1];
+
+                Console.WriteLine("Data at index " + currentBlock.index + " : " + string.Join(";", currentBlock.data.Select(x => x.ToString()).ToArray()));
+
+                // Check if the current block hash is consistent with the hash calculated
+                if (currentBlock.hash != currentBlock.CalculateHash())
+                {
+                    throw new Exception("Chain is not valid! Current hash is incorrect!");
+                }
+                // Check if the Previous hash match the hash of previous block
+                if (!currentBlock.prevHash.Equals(previousBlock.hash))
+                {
+                    throw new Exception("Chain is not valid! PreviousHash isn't pointing to the previous block's hash!");
+                }
+                // Check if hash string has initial zeroes
+                if (currentBlock.hash.Substring(0, difficulty) != new String('0', difficulty))
+                {
+                    throw new Exception("Chain is not valid! Hash does not show proof-of-work!");
+                }
+            }
+        }
+    }
     [Serializable]
-
-
     public class HelloWorld
     {
         public string result = "None";
@@ -51,7 +148,7 @@ namespace AnekaHealthKeeper
         public void PrintHello()
         {
 
-           
+
         }
     }
     class Program
@@ -66,6 +163,8 @@ namespace AnekaHealthKeeper
             AnekaApplication<AnekaThread, ThreadManager> app = null;
             try
             {
+                var myBlockChain = new Blockchain();
+                Console.WriteLine("Hash : " + myBlockChain.GetLatestBlock().hash);
                 while (true)
                 {
                     Logger.Start();
@@ -107,13 +206,15 @@ namespace AnekaHealthKeeper
 
                     th[0].Join();
                     hw = (HelloWorld)th[0].Target;
-                    Console.WriteLine(hw.len);
-                    Console.WriteLine(partitions[0].Count());
                     foreach (var val in partitions[0])
                     {
                         Console.WriteLine("Value in partitions[0] : " + val);
                     }
 
+                    myBlockChain.AddBlock(partitions[0]);
+                    Console.WriteLine("Hash value : " + myBlockChain.GetLatestBlock().hash);
+                    myBlockChain.AddBlock(partitions[1]);
+                    Console.WriteLine("Hash value : " + myBlockChain.GetLatestBlock().hash);
 
                     Console.WriteLine("Check : " + hw.check);
                     Console.WriteLine("Value : {0} , NodeId:{1},SubmissionTime:{2},Completion Time{3}", hw.result, th[0].NodeId, th[0].SubmissionTime, th[0].CompletionTime);
@@ -126,12 +227,13 @@ namespace AnekaHealthKeeper
                     {
                         Console.WriteLine("Value in partitions[1] : " + val);
                     }
-                    Console.WriteLine(hw2.len);
-                    Console.WriteLine(partitions[1].Count());
 
                     Console.WriteLine("Value : {0} , NodeId:{1},SubmissionTime:{2},Completion Time{3}", hw2.result, th[1].NodeId, th[1].SubmissionTime, th[1].CompletionTime);
                     Console.WriteLine("Minimum : {0}", hw2.min);
                     Console.WriteLine("Count : {0}", hw2.count);
+
+                    myBlockChain.ValidateChain();
+                    Console.WriteLine("Blockchain Validation checked!");
 
                     totalcount = hw.count + hw2.count;
                     if (hw.min < hw2.min)
@@ -166,9 +268,10 @@ namespace AnekaHealthKeeper
 
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                Console.Write(e.StackTrace);
+                Console.WriteLine(e.ToString());
+                Console.WriteLine(e.StackTrace);
             }
             finally
             {
@@ -189,7 +292,7 @@ namespace AnekaHealthKeeper
                     Console.WriteLine("DEBUG: " + result[0]);
                     return false;
                 }
-                else if(result[0] == "Analyze = Done")
+                else if (result[0] == "Analyze = Done")
                 {
                     Console.WriteLine("DEBUG: Analysis Done");
                     return false;
