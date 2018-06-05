@@ -302,7 +302,12 @@ namespace AnekaHealthKeeper
                     Console.WriteLine("Minimum : {0}", hw2.min);
                     Console.WriteLine("Count : {0}", hw2.count);
 
-
+                    // Verify data not tampered
+                    if(hw.checkhash == false && hw2.checkhash == false)
+                    {
+                        throw new Exception("Data tampered in Master!");
+                    }
+                    
                     // Validate blockchain
                     myBlockChain.ValidateChain();
                     Console.WriteLine("Blockchain Validation checked!");
