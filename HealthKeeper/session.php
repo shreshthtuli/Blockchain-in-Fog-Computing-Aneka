@@ -111,11 +111,42 @@ if(isset($_POST['analyze'])){
 	}
 	
 	echo "Disease severity : ".$sev;	
-	fclose($file1);
 	
+	$allData = fgets($file1);
+	$allData = fgets($file1);
+	$allArray = explode(",", $allData);
+	$dataPoints = array();
+	foreach ($allArray as $value) {
+    array_push($dataPoints, array("y" => (int)$value, "label" => "-"));
+	}
+
+
+	fclose($file1);
+
 }
 
 ?>
+<script>
+window.onload = function () {
+ 
+var chart = new CanvasJS.Chart("chartContainer", {
+	title: {
+		text: "Sleep Apnea Graph"
+	},
+	axisY: {
+		title: "Oxygen Level"
+	},
+	data: [{
+		type: "line",
+		dataPoints: <?php echo json_encode($dataPoints, JSON_NUMERIC_CHECK); ?>
+	}]
+});
+chart.render();
+ 
+}
+</script>
+<div id="chartContainer" style="height: 370px; width: 50%;"></div>
+<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
 
 
 </body>
