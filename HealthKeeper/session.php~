@@ -116,8 +116,10 @@ if(isset($_POST['analyze'])){
 	$allData = fgets($file1);
 	$allArray = explode(",", $allData);
 	$dataPoints = array();
+	$criticalPoints = array();
 	foreach ($allArray as $value) {
     array_push($dataPoints, array("y" => (int)$value, "label" => "-"));
+    array_push($criticalPoints, array("y" => 88, "label" => "-"));
 	}
 
 
@@ -137,8 +139,13 @@ var chart = new CanvasJS.Chart("chartContainer", {
 		title: "Oxygen Level"
 	},
 	data: [{
+		markerType: "none",
 		type: "line",
-		dataPoints: <?php echo json_encode($dataPoints, JSON_NUMERIC_CHECK); ?>
+		dataPoints: <?php echo json_encode($dataPoints, JSON_NUMERIC_CHECK); ?>},
+		{
+	   markerType: "none", 
+		type: "line",
+		dataPoints: <?php echo json_encode($criticalPoints, JSON_NUMERIC_CHECK); ?>
 	}]
 });
 chart.render();
