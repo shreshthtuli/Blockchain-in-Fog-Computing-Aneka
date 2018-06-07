@@ -209,6 +209,7 @@ namespace AnekaHealthKeeper
         static List<int> intlist;
         static int totalcount;
         static int minima;
+        static List<int> allData = new List<int>();
         static void Main(string[] args)
         {
             RSACryptoServiceProvider RSA = new RSACryptoServiceProvider();
@@ -321,6 +322,9 @@ namespace AnekaHealthKeeper
                     myBlockChain.ValidateChain();
                     Console.WriteLine("Blockchain Validation checked!");
 
+                    // Compile all results
+                    allData = allData.Concat(partitions[0]).Concat(partitions[1]).ToList();
+
                     // Publish results in result.txt
                     totalcount = hw.count + hw2.count;
                     if (hw.min < hw2.min)
@@ -346,14 +350,19 @@ namespace AnekaHealthKeeper
                         throw new InvalidDataException("Line does not exist in " + sourceFile);
 
                     // Read the old file.
-                    string[] lines = File.ReadAllLines(sourceFile);
+                    string[] lines = new string[3];
+                    string[] linestemp = File.ReadAllLines(sourceFile);
+                    lines[1] = linestemp[1];
 
                     lines[0] = totalcount + "," + minima;
+                    lines[2] = string.Join(",", allData.Select(x => x.ToString()).ToArray());
                     System.IO.File.WriteAllLines(destinationFile, lines);
-                    lines[0] = "Analyze = Done";
-                    System.IO.File.WriteAllLines(sourceFile, lines);
+                    linestemp[0] = "Analyze = Done";
+                    System.IO.File.WriteAllLines(sourceFile, linestemp);
 
                 }
+
+                
             }
             catch (Exception e)
             {
